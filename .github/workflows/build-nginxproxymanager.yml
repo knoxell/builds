@@ -95,7 +95,7 @@ jobs:
           chmod +x scripts/buildx
 
           # Point base image in Dockerfile to your custom certbot-node image
-          sed -i "s|FROM .*/nginx-full:certbot-node|FROM ghcr.io/${OWNER_LC}/nginx-full:certbot-node|g" docker/Dockerfile
+          sed -i "s|nginxproxymanager/nginx-full:certbot-node|ghcr.io/${OWNER_LC}/nginx-full:certbot-node|g" docker/Dockerfile
 
           # Verify replacement succeeded
           grep "ghcr.io/${OWNER_LC}/nginx-full:certbot-node" docker/Dockerfile
