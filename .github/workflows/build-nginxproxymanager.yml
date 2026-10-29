@@ -1,0 +1,105 @@
+name: Build Nginx Proxy Manager
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: 'Git ref/PR for docker-nginx-full'
+        required: false
+        default: 'refs/pull/41/head'
+      npm_ref:
+        description: 'Git ref/branch for nginx-proxy-manager'
+        required: false
+        default: 'master'
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Base and Full NPM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Compute Lowercase Repo Owner
+        id: prep
+        run: |
+          echo "owner_lc=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # -------------------------------------------------------------
+      # 1. Checkout docker-nginx-full (PR 41) & run bake
+      # -------------------------------------------------------------
+      - name: Checkout docker-nginx-full (PR 41)
+        uses: actions/checkout@v4
+        with:
+          repository: NginxProxyManager/docker-nginx-full
+          ref: ${{ github.event.inputs.base_ref || 'refs/pull/41/head' }}
+          path: docker-nginx-full
+
+      - name: Bake and Push docker-nginx-full
+        working-directory: ./docker-nginx-full
+        env:
+          OWNER_LC: ${{ steps.prep.outputs.owner_lc }}
+        run: |
+          chmod +x scripts/bake.sh
+
+          # Replace upstream namespace with lowercase GHCR registry path
+          sed -i "s|nginxproxymanager/nginx-full|ghcr.io/${OWNER_LC}/nginx-full|g" docker-bake.hcl
+
+          # Verify replacement succeeded
+          grep "ghcr.io/${OWNER_LC}/nginx-full" docker-bake.hcl
+
+          # Pass targets explicitly
+          ./scripts/bake.sh --push certbot certbot-node
+
+      # -------------------------------------------------------------
+      # 2. Checkout nginx-proxy-manager (master) & build
+      # -------------------------------------------------------------
+      - name: Checkout nginx-proxy-manager
+        uses: actions/checkout@v4
+        with:
+          repository: NginxProxyManager/nginx-proxy-manager
+          ref: ${{ github.event.inputs.npm_ref || 'master' }}
+          path: nginx-proxy-manager
+
+      - name: Build Frontend and Backend
+        working-directory: ./nginx-proxy-manager
+        run: |
+          chmod +x scripts/ci/frontend-build scripts/ci/test-and-build
+          ./scripts/ci/frontend-build
+          ./scripts/ci/test-and-build
+
+      - name: Buildx and Push nginx-proxy-manager
+        working-directory: ./nginx-proxy-manager
+        env:
+          OWNER_LC: ${{ steps.prep.outputs.owner_lc }}
+        run: |
+          chmod +x scripts/buildx
+
+          # Point base image in Dockerfile to your custom certbot-node image
+          sed -i "s|FROM .*/nginx-full:certbot-node|FROM ghcr.io/${OWNER_LC}/nginx-full:certbot-node|g" docker/Dockerfile
+
+          # Verify replacement succeeded
+          grep "ghcr.io/${OWNER_LC}/nginx-full:certbot-node" docker/Dockerfile
+
+          # Build and push final images
+          ./scripts/buildx --push \
+            -t "ghcr.io/${OWNER_LC}/nginx-proxy-manager:latest"
