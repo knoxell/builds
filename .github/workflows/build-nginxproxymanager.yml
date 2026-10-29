@@ -62,10 +62,10 @@ jobs:
           chmod +x scripts/bake.sh
 
           # Replace upstream namespace with lowercase GHCR registry path
-          sed -i "s|nginxproxymanager/nginx-full|ghcr.io/${OWNER_LC}/nginx-full|g" docker-bake.hcl
+          sed -i "s|nginxproxymanager/nginx-full|ghcr.io/${OWNER_LC}/nginx-full|g" docker/docker-bake.hcl
 
           # Verify replacement succeeded
-          grep "ghcr.io/${OWNER_LC}/nginx-full" docker-bake.hcl
+          grep "ghcr.io/${OWNER_LC}/nginx-full" docker/docker-bake.hcl
 
           # Pass targets explicitly
           ./scripts/bake.sh --push certbot certbot-node
