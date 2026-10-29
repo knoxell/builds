@@ -3,6 +3,14 @@ name: Build Nginx Proxy Manager
 on:
   workflow_dispatch:
     inputs:
+      skip_base:
+        description: 'Skip building docker-nginx-full base (use previously built image in GHCR)'
+        type: boolean
+        default: false
+      skip_npm:
+        description: 'Skip building nginx-proxy-manager image (only build base)'
+        type: boolean
+        default: false
       base_ref:
         description: 'Git ref/PR for docker-nginx-full'
         required: false
@@ -48,6 +56,7 @@ jobs:
       # 1. Checkout docker-nginx-full (PR 41) & run bake
       # -------------------------------------------------------------
       - name: Checkout docker-nginx-full (PR 41)
+        if: ${{ !inputs.skip_base }}
         uses: actions/checkout@v4
         with:
           repository: NginxProxyManager/docker-nginx-full
@@ -55,6 +64,7 @@ jobs:
           path: docker-nginx-full
 
       - name: Bake and Push docker-nginx-full
+        if: ${{ !inputs.skip_base }}
         working-directory: ./docker-nginx-full
         env:
           OWNER_LC: ${{ steps.prep.outputs.owner_lc }}
@@ -74,6 +84,7 @@ jobs:
       # 2. Checkout nginx-proxy-manager (master) & build
       # -------------------------------------------------------------
       - name: Checkout nginx-proxy-manager
+        if: ${{ !inputs.skip_npm }}
         uses: actions/checkout@v4
         with:
           repository: NginxProxyManager/nginx-proxy-manager
@@ -81,6 +92,7 @@ jobs:
           path: nginx-proxy-manager
 
       - name: Build Frontend and Backend
+        if: ${{ !inputs.skip_npm }}
         working-directory: ./nginx-proxy-manager
         run: |
           chmod +x scripts/ci/frontend-build scripts/ci/test-and-build
@@ -88,6 +100,7 @@ jobs:
           ./scripts/ci/test-and-build
 
       - name: Buildx and Push nginx-proxy-manager
+        if: ${{ !inputs.skip_npm }}
         working-directory: ./nginx-proxy-manager
         env:
           OWNER_LC: ${{ steps.prep.outputs.owner_lc }}
