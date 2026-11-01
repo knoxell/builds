@@ -1,0 +1,103 @@
+name: 'Verify Min Version in History'
+description: 'Checks git history for a minimum version and determines whether fallback is required'
+
+inputs:
+  target-dir:
+    description: 'Path where the repository was checked out'
+    required: false
+    default: '.'
+  default-repo:
+    description: 'Default repository (owner/repo)'
+    required: true
+  default-ref:
+    description: 'Default git ref/branch'
+    required: true
+  alt-repo:
+    description: 'Alternative repository if version check fails'
+    required: false
+    default: ''
+  alt-ref:
+    description: 'Alternative git ref/PR if version check fails'
+    required: false
+    default: ''
+  var-name:
+    description: 'Variable name to search'
+    required: true
+  var-file:
+    description: 'File containing the variable (optional)'
+    required: false
+    default: ''
+  min-version:
+    description: 'Minimum required semantic version'
+    required: true
+
+outputs:
+  needs-fallback:
+    description: 'true if the version check failed and fallback is needed'
+    value: ${{ steps.verify.outputs.needs_fallback }}
+  target-repo:
+    description: 'The final repository to check out'
+    value: ${{ steps.verify.outputs.target_repo }}
+  target-ref:
+    description: 'The final ref to check out'
+    value: ${{ steps.verify.outputs.target_ref }}
+  detected-version:
+    description: 'Detected semantic version'
+    value: ${{ steps.verify.outputs.detected_version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: verify
+      shell: bash
+      working-directory: ${{ inputs.target-dir }}
+      run: |
+        SCRIPT_PATH="${{ github.action_path }}/git-verify-min-version-in-history.sh"
+        chmod +x "$SCRIPT_PATH"
+
+        ALT_REPO="${{ inputs.alt-repo }}"
+        if [ -z "$ALT_REPO" ]; then
+          ALT_REPO="${{ inputs.default-repo }}"
+        fi
+
+        VERIFY_ARGS=(
+          --variable-name "${{ inputs.var-name }}"
+          --min-version "${{ inputs.min-version }}"
+          --ref "HEAD"
+        )
+        if [ -n "${{ inputs.var-file }}" ]; then
+          VERIFY_ARGS+=(--target-file "${{ inputs.var-file }}")
+        fi
+
+        DETECTED_VER=""
+        if DETECTED_VER=$("$SCRIPT_PATH" "${VERIFY_ARGS[@]}"); then
+          STATUS="Passed (>= ${{ inputs.min-version }})"
+          NEEDS_FALLBACK="false"
+          TARGET_REPO="${{ inputs.default-repo }}"
+          TARGET_REF="${{ inputs.default-ref }}"
+          echo "Version check passed. Target ref: $TARGET_REF"
+        else
+          STATUS="Failed / Below threshold (< ${{ inputs.min-version }})"
+          NEEDS_FALLBACK="true"
+          TARGET_REPO="$ALT_REPO"
+          TARGET_REF="${{ inputs.alt-ref }}"
+          echo "Version check failed (detected: '${DETECTED_VER:-none}'). Target ref: $TARGET_REF"
+        fi
+
+        echo "needs_fallback=$NEEDS_FALLBACK" >> "$GITHUB_OUTPUT"
+        echo "target_repo=$TARGET_REPO" >> "$GITHUB_OUTPUT"
+        echo "target_ref=$TARGET_REF" >> "$GITHUB_OUTPUT"
+        echo "detected_version=$DETECTED_VER" >> "$GITHUB_OUTPUT"
+
+        {
+          echo "### \`${{ inputs.target-dir }}\` Version Verification"
+          echo ""
+          echo "| Parameter | Value |"
+          echo "| :--- | :--- |"
+          echo "| **Variable Checked** | \`${{ inputs.var-name }}\` in \`${{ inputs.var-file || 'full history' }}\` |"
+          echo "| **Detected Version** | \`${DETECTED_VER:-not found}\` |"
+          echo "| **Required Version** | \`>= ${{ inputs.min-version }}\` |"
+          echo "| **Status** | ${STATUS} |"
+          echo "| **Target Repository** | \`${TARGET_REPO}\` |"
+          echo "| **Target Ref** | \`${TARGET_REF}\` |"
+        } >> "$GITHUB_STEP_SUMMARY"
