@@ -52,7 +52,7 @@ jobs:
   # Job 1: Build Base Image (docker-nginx-full)
   # =============================================================
   build-base:
-    name: Build Base and Full NPM
+    name: "Build Base: docker-nginx-full"
     if: ${{ !inputs.skip_base }}
     runs-on: ubuntu-latest
     permissions:
@@ -93,10 +93,6 @@ jobs:
 
       - name: Resolve Source Ref & Fallback
         id: version-check
-        if: |
-          (inputs.base_var_name != '') &&
-          (inputs.base_min_version != '') &&
-          (inputs.base_alt_ref != '' || inputs.base_alt_repo != '')
         uses: ./.github/actions/verify-check
         with:
           target-dir: docker-nginx-full
