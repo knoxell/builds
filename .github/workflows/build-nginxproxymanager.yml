@@ -93,7 +93,7 @@ jobs:
 
       - name: Resolve Source Ref & Fallback
         id: version-check
-        uses: ./.github/actions/verify-check
+        uses: ./.github/actions/version-check
         with:
           target-dir: docker-nginx-full
           default-repo: ${{ github.event.inputs.base_repo || 'NginxProxyManager/docker-nginx-full' }}
