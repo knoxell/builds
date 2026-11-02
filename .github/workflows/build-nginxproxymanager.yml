@@ -79,7 +79,7 @@ jobs:
           default-ref: 'master'
           alt-ref: 'refs/pull/41/head'
           var-name: 'OPENRESTY_VERSION'
-          var-file: 'Jenkinsfile'
+          var-file: '.jenkins/Jenkinsfile'
           min-version: '1.31.8.1'
 
       - name: Checkout Fallback Source
