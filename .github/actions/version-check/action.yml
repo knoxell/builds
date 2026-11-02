@@ -52,6 +52,11 @@ runs:
       shell: bash
       working-directory: ${{ inputs.target-dir }}
       run: |
+        if [[ ! -d "$TARGET_DIR/.git" ]]; then
+          echo "Error: target-dir '$TARGET_DIR' is not a valid git repository." >&2
+          exit 1
+        fi
+
         SCRIPT_PATH="${{ github.action_path }}/git-verify-min-version-in-history.sh"
         chmod +x "$SCRIPT_PATH"
 
@@ -89,15 +94,26 @@ runs:
         echo "target_ref=$TARGET_REF" >> "$GITHUB_OUTPUT"
         echo "detected_version=$DETECTED_VER" >> "$GITHUB_OUTPUT"
 
-        {
-          echo "### \`${{ inputs.target-dir }}\` Version Verification"
-          echo ""
-          echo "| Parameter | Value |"
-          echo "| :--- | :--- |"
-          echo "| **Variable Checked** | \`${{ inputs.var-name }}\` in \`${{ inputs.var-file || 'full history' }}\` |"
-          echo "| **Detected Version** | \`${DETECTED_VER:-not found}\` |"
-          echo "| **Required Version** | \`>= ${{ inputs.min-version }}\` |"
-          echo "| **Status** | ${STATUS} |"
-          echo "| **Target Repository** | \`${TARGET_REPO}\` |"
-          echo "| **Target Ref** | \`${TARGET_REF}\` |"
-        } >> "$GITHUB_STEP_SUMMARY"
+        # Determine summary statement
+        if [[ "$NEEDS_FALLBACK" == "true" ]]; then
+          SUMMARY_HEADLINE="🔀 **Fallback triggered:** Switched to \`${TARGET_REPO}\` @ \`${TARGET_REF}\`"
+        else
+          SUMMARY_HEADLINE="🎯 **Default retained:** Retaining \`${TARGET_REPO}\` @ \`${TARGET_REF}\`"
+        fi
+
+        if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+          {
+            echo "### \`${{ inputs.target-dir }}\` Version Verification"
+            echo ""
+            echo "> ${SUMMARY_HEADLINE}"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "| :--- | :--- |"
+            echo "| **Variable Checked** | \`${{ inputs.var-name }}\` in \`${{ inputs.var-file || 'full history' }}\` |"
+            echo "| **Detected Version** | \`${DETECTED_VER:-not found}\` |"
+            echo "| **Required Version** | \`>= ${{ inputs.min-version }}\` |"
+            echo "| **Status** | ${STATUS} |"
+            echo "| **Target Repository** | \`${TARGET_REPO}\` |"
+            echo "| **Target Ref** | \`${TARGET_REF}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi

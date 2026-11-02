@@ -11,34 +11,10 @@ on:
         description: 'Skip building nginx-proxy-manager image (only build base)'
         type: boolean
         default: false
-      base_repo:
-        description: 'Primary repository for docker-nginx-full'
-        required: false
-        default: 'NginxProxyManager/docker-nginx-full'
       base_ref:
         description: 'Default git ref/branch for docker-nginx-full'
         required: false
         default: 'master'
-      base_var_name:
-        description: 'Variable name to verify in base repository'
-        required: false
-        default: 'OPENRESTY_VERSION'
-      base_var_file:
-        description: 'Target file containing the variable (leave empty to search full history)'
-        required: false
-        default: 'Jenkinsfile'
-      base_min_version:
-        description: 'Minimum required semantic version for the variable'
-        required: false
-        default: '1.31.8.1'
-      base_alt_repo:
-        description: 'Alternative repository if version check fails (optional; defaults to base_repo)'
-        required: false
-        default: ''
-      base_alt_ref:
-        description: 'Alternative git ref/PR if version check fails'
-        required: false
-        default: 'refs/pull/41/head'
       npm_ref:
         description: 'Git ref/branch for nginx-proxy-manager'
         required: false
@@ -98,14 +74,13 @@ jobs:
         id: version-check
         uses: ./.github/actions/version-check
         with:
-          target-dir: docker-nginx-full
-          default-repo: ${{ github.event.inputs.base_repo || 'NginxProxyManager/docker-nginx-full' }}
-          default-ref: ${{ github.event.inputs.base_ref || 'master' }}
-          alt-repo: ${{ github.event.inputs.base_alt_repo }}
-          alt-ref: ${{ github.event.inputs.base_alt_ref }}
-          var-name: ${{ github.event.inputs.base_var_name }}
-          var-file: ${{ github.event.inputs.base_var_file }}
-          min-version: ${{ github.event.inputs.base_min_version }}
+          target-dir: 'docker-nginx-full'
+          default-repo: 'NginxProxyManager/docker-nginx-full'
+          default-ref: 'master'
+          alt-ref: 'refs/pull/41/head'
+          var-name: 'OPENRESTY_VERSION'
+          var-file: 'Jenkinsfile'
+          min-version: '1.31.8.1'
 
       - name: Checkout Fallback Source
         if: steps.version-check.outputs.needs-fallback == 'true'
