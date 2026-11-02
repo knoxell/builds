@@ -51,6 +51,8 @@ runs:
     - id: verify
       shell: bash
       working-directory: ${{ inputs.target-dir }}
+      env:
+        TARGET_DIR: ${{ inputs.target-dir }}
       run: |
         if [[ ! -d "$TARGET_DIR/.git" ]]; then
           echo "Error: target-dir '$TARGET_DIR' is not a valid git repository." >&2
