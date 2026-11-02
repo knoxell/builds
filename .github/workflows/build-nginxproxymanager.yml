@@ -116,7 +116,7 @@ jobs:
   build-npm:
     name: Build Nginx Proxy Manager
     needs: [build-base]
-    if: ${{ !inputs.skip_npm }}
+    if: ${{ always() && !cancelled() && !inputs.skip_npm }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
