@@ -1,6 +1,8 @@
 name: Build Nginx Proxy Manager
 
 on:
+  schedule:
+    - cron: '0 2 * * *' # Every day at 02:00 UTC
   workflow_dispatch:
     inputs:
       skip_base:
