@@ -1,0 +1,68 @@
+name: Build Redlib (EnkryptattuDev Fork)
+
+on:
+  workflow_dispatch:
+    inputs:
+      redlib_ref:
+        description: 'Git ref, branch, or tag for redlib'
+        required: false
+        default: 'main'
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Push Redlib (Nachtalb)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set Lowercase Repo Owner
+        env:
+          RAW_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "OWNER_LC=$(echo "$RAW_OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Checkout Workflow Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Redlib (Nachtalb)
+        uses: actions/checkout@v4
+        with:
+          repository: Nachtalb/redlib
+          ref: main
+          path: redlib
+
+      - name: Patch
+        working-directory: ./redlib
+        run: |
+          patch -p1 -i ../mods/patch-redlib-http1_only.pt || true
+
+      # -------------------------------------------------------------
+      # 1. Build and Push Image 
+      # -------------------------------------------------------------
+      - name: Build & Push Redlib (Alpine)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./redlib
+          file: ./redlib/Dockerfile.distroless
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/redlib:latest
+          cache-from: type=gha,scope=redlib-nachtalb-distroless
+          cache-to: type=gha,mode=max,scope=redlib-nachtalb-distroless
+

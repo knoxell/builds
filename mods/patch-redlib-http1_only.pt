@@ -1,0 +1,12 @@
+diff --git a/src/client.rs b/src/client.rs
+index b7220ca..1be170c 100644
+--- a/src/client.rs
++++ b/src/client.rs
+@@ -245,6 +245,7 @@ fn client_for(profile: Profile, platform: Platform) -> WreqClient {
+ 	let builder = WreqClient::builder()
+ 		.emulation(Emulation::builder().profile(profile).platform(platform).build())
+ 		.redirect(Policy::none())
++		.http1_only()
+ 		.dns_resolver(RedgifsIpv4Resolver);
+ 	match CA_STORE.get() {
+ 		Some(store) => builder.tls_cert_store(store.clone()),
