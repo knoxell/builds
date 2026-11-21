@@ -10,7 +10,7 @@ Automated GitHub Actions pipelines to build, patch, and publish multi-architectu
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | [`ghcr.io/knoxell/nginx-full`](https://github.com/users/knoxell/packages/container/package/nginx-full) | `certbot`, `certbot-node` | [docker-nginx-full](https://github.com/NginxProxyManager/docker-nginx-full) | [PR 41](https://github.com/NginxProxyManager/docker-nginx-full/pull/41)  | Base image dependency | [build-nginxproxymanager.yml](.github/workflows/build-nginxproxymanager.yml) |
 | [`ghcr.io/knoxell/nginx-proxy-manager`](https://github.com/users/knoxell/packages/container/package/nginx-proxy-manager) | `latest` | [nginx-proxy-manager](https://github.com/NginxProxyManager/nginx-proxy-manager) | `master` | Built with [`ghcr.io/knoxell/nginx-full:certbot-node`](https://github.com/users/knoxell/packages/container/package/nginx-full) as base | [build-nginxproxymanager.yml](.github/workflows/build-nginxproxymanager.yml) |
-| [`ghcr.io/<owner>/redlib`](https://github.com/users/<owner>/packages/container/package/redlib) | `latest` | [redlib (EnkryptattuDev fork)](https://github.com/EnkryptattuDev/redlib) | `main` | redlib Fork | [build-redlib-nachtalb.yml](.github/workflows/build-redlib-nachtalb.yml) |
+| [`ghcr.io/knoxell/redlib`](https://github.com/users/knoxell/packages/container/package/redlib) | `latest` | [redlib (Nachtalb fork)](https://github.com/Nachtalb/redlib) | `main` | redlib Fork | [build-redlib-nachtalb.yml](.github/workflows/build-redlib-nachtalb.yml) |
 
 
 ---
@@ -32,7 +32,7 @@ Each pipeline operates as an orchestration harness:
 ├── .github/
 │   └── workflows/
 │       ├── build-nginxproxymanager.yml     # Builds base nginx-full (PR 41) + nginx-proxy-manager master
-│       ├── build-redlib-nachtalb.yml # Builds EnkryptattuDev's redlib fork
+│       ├── build-redlib-nachtalb.yml       # Builds Nachtalb's redlib fork
 │       └── <future-builds>.yml             # Additional build pipelines
 └── README.md
 ```
