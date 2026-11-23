@@ -54,7 +54,7 @@ jobs:
       # -------------------------------------------------------------
       # 1. Build and Push Image 
       # -------------------------------------------------------------
-      - name: Build & Push Redlib (Alpine)
+      - name: Build & Push Redlib 
         uses: docker/build-push-action@v6
         with:
           context: ./redlib
@@ -63,6 +63,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/redlib:latest
-          cache-from: type=gha,scope=redlib-nachtalb-distroless
-          cache-to: type=gha,mode=max,scope=redlib-nachtalb-distroless
+            ghcr.io/${{ env.OWNER_LC }}/redlib:distroless
+          #cache-from: type=gha,scope=redlib-nachtalb-distroless
+          #cache-to: type=gha,mode=max,scope=redlib-nachtalb-distroless
 
