@@ -1,4 +1,4 @@
-name: Build Redlib (EnkryptattuDev Fork)
+name: Build Redlib (Nachtalb Fork)
 
 on:
   workflow_dispatch:
